@@ -2,7 +2,7 @@ FROM rust:1.85 as builder
 
 WORKDIR /app
 
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock .env ./
 COPY src/ ./src/
 
 RUN cargo build --release
