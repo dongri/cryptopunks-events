@@ -2,7 +2,7 @@ use dotenv::dotenv;
 use ethers::contract::EthLogDecode;
 use ethers::contract::abigen;
 use ethers::core::abi::Address;
-use ethers::core::types::Filter;
+use ethers::core::types::{Filter, U256};
 use ethers::providers::{Middleware, Provider, Ws};
 use futures::StreamExt;
 use reqwest::Client;
@@ -64,48 +64,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             topics: log.topics.clone(),
             data: log.data.to_vec(),
         };
-        let message = if let Ok(event) = crypto_punks_market::AssignFilter::decode_log(&log) {
-            format!(
-                "Assign: punk {} assigned to {:?}",
-                event.punk_index, event.to
-            )
-        } else if let Ok(event) = crypto_punks_market::TransferFilter::decode_log(&log) {
-            format!(
-                "Transfer: from {:?} to {:?}, value: {}",
-                event.from, event.to, event.value
-            )
-        } else if let Ok(event) = crypto_punks_market::PunkTransferFilter::decode_log(&log) {
-            format!(
-                "PunkTransfer: punk {} transferred from {:?} to {:?}",
-                event.punk_index, event.from, event.to
-            )
-        } else if let Ok(event) = crypto_punks_market::PunkOfferedFilter::decode_log(&log) {
-            format!(
-                "PunkOffered: punk {} offered at minimum {} wei to {:?}",
-                event.punk_index, event.min_value, event.to_address
-            )
-        } else if let Ok(event) = crypto_punks_market::PunkBidEnteredFilter::decode_log(&log) {
+        let message = if let Ok(event) = crypto_punks_market::PunkBidEnteredFilter::decode_log(&log)
+        {
+            if event.punk_index != U256::from(1943u64) {
+                break;
+            }
             format!(
                 "PunkBidEntered: punk {} bid {} wei by {:?}",
                 event.punk_index, event.value, event.from_address
             )
-        } else if let Ok(event) = crypto_punks_market::PunkBidWithdrawnFilter::decode_log(&log) {
-            format!(
-                "PunkBidWithdrawn: punk {} bid withdrawn by {:?} for {} wei",
-                event.punk_index, event.from_address, event.value
-            )
-        } else if let Ok(event) = crypto_punks_market::PunkBoughtFilter::decode_log(&log) {
-            format!(
-                "PunkBought: punk {} bought for {} wei from {:?} to {:?}",
-                event.punk_index, event.value, event.from_address, event.to_address
-            )
-        } else if let Ok(event) = crypto_punks_market::PunkNoLongerForSaleFilter::decode_log(&log) {
-            format!(
-                "PunkNoLongerForSale: punk {} is no longer for sale",
-                event.punk_index
-            )
         } else {
-            format!("Unknown event: {:?}", log)
+            break;
         };
 
         println!("{}", message);
